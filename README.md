@@ -24,6 +24,8 @@ The first implementation slice packages the assets already consumed by bootstrap
 - Argo Rollouts `v1.9.0` install manifest
 - Cilium `1.19.5` chart tarball
 
+The workflow is intentionally kept small in this first revision so it can be triggered independently while the larger image-bundle pipeline is still being designed.
+
 Follow-up work should extend this repository to export platform container images into an OCI or tar-based offline image bundle so bootstrap and system deploy do not depend on registry access.
 
 ## Local Build
