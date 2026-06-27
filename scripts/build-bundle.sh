@@ -26,7 +26,7 @@ download() {
 
 manifest_name() {
   local url="$1"
-  printf '%s\n' "${url}" | sed -e 's#://#___#g' -e 's#[/.:=-]#_#g'
+  printf '%s' "${url}" | tr -c 'A-Za-z0-9._-' '_' | cut -c1-180
 }
 
 download "${GATEWAY_API_URL}" "${MANIFEST_DIR}/$(manifest_name "${GATEWAY_API_URL}").yaml"
