@@ -1,0 +1,30 @@
+name: Build Offline Bundle
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/build-offline-bundle.yaml
+      - scripts/**
+      - versions/**
+      - README.md
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build bundle
+        run: |
+          chmod +x scripts/build-bundle.sh
+          scripts/build-bundle.sh
+
+      - name: Upload bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: kadm-platform-assets
+          path: dist/*.tgz
