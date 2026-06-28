@@ -183,7 +183,6 @@ image_from_manifest() {
 write_runtime_image_list() {
   local output="$1"
   local release_console_dir="${SOURCE_DIR}/${KADM_RELEASE_CONSOLE_REPO}"
-  local app_configs_dir="${SOURCE_DIR}/${KADM_APP_CONFIGS_REPO}"
 
   {
     image_from_manifest "$(manifest_path "${ARGO_CD_URL}")"
@@ -194,9 +193,6 @@ write_runtime_image_list() {
     printf '%s\n' "${CILIUM_CERTGEN_IMAGE}"
     printf '%s\n' "${CILIUM_STARTUP_SCRIPT_IMAGE}"
     image_from_kustomization "${release_console_dir}/k8s/overlays/prod/kustomization.yaml"
-    find "${app_configs_dir}/apps" -path '*/overlays/prod/kustomization.yaml' -type f -print | sort | while read -r kustomization; do
-      image_from_kustomization "${kustomization}"
-    done
   } | awk 'NF && !seen[$0]++' > "${output}"
 }
 

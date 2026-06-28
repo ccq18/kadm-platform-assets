@@ -9,7 +9,7 @@ Current scope:
 - pinned K3s installer assets
 - cached Helm archive
 - cached KADM bootstrap repository archives
-- runtime container image archive for the current platform and app configs
+- runtime container image archive for the current platform components
 - a reproducible bundle script
 - a GitHub Actions workflow that builds and publishes the release bundle
 
@@ -36,10 +36,12 @@ The complete offline bundle packages the assets consumed by bootstrap and by the
 - Argo CD `v3.4.4` install manifest
 - Argo Rollouts `v1.9.0` install manifest
 - Cilium `1.19.5` chart tarball
-- runtime images referenced by the pinned Argo CD and Argo Rollouts manifests, Cilium defaults used by KADM, the KADM release console overlay, and current `kadm-app-configs` production overlays
+- runtime images referenced by the pinned Argo CD and Argo Rollouts manifests, Cilium defaults used by KADM, and the KADM release console overlay
 - source archives for `kadm-platform-system`, `kadm-release-console`, and `kadm-app-configs`
 
 The generated bundle is expected to be large. The current project is expected to produce roughly a 1.1 GB to 1.5 GB release asset after runtime images are included. Generated bundles must not be committed to Git.
+
+Application runtime images referenced by `kadm-app-configs` are intentionally not included in this platform bundle. They should be distributed by the application release pipeline or a separate application image bundle.
 
 ## Local Build
 
