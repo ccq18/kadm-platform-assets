@@ -63,6 +63,8 @@ export KADM_GHCR_TOKEN=<token-with-package-read>
 scripts/build-bundle.sh
 ```
 
+In GitHub Actions, the workflow uses `GITHUB_TOKEN` with `packages: read` by default. Set `KADM_GHCR_USERNAME` and `KADM_GHCR_TOKEN` repository secrets only when the packages are not granted to this repository.
+
 ## CI
 
 `build-offline-bundle` runs on push to `main` and on manual dispatch.

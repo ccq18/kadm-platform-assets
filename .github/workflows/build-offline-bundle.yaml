@@ -16,6 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      packages: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,8 +29,8 @@ jobs:
       - name: Build bundle
         env:
           KADM_GITHUB_TOKEN: ${{ github.token }}
-          KADM_GHCR_USERNAME: ${{ secrets.KADM_GHCR_USERNAME }}
-          KADM_GHCR_TOKEN: ${{ secrets.KADM_GHCR_TOKEN }}
+          KADM_GHCR_USERNAME: ${{ secrets.KADM_GHCR_USERNAME || github.actor }}
+          KADM_GHCR_TOKEN: ${{ secrets.KADM_GHCR_TOKEN || github.token }}
         run: |
           chmod +x scripts/build-bundle.sh
           scripts/build-bundle.sh
