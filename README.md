@@ -39,9 +39,43 @@ The complete offline bundle packages the assets consumed by bootstrap and by the
 - runtime images referenced by the pinned Argo CD and Argo Rollouts manifests, Cilium defaults used by KADM, and the KADM release console overlay
 - source archives for `kadm-platform-system`, `kadm-release-console`, and `kadm-app-configs`
 
-The generated bundle is expected to be large. The current project is expected to produce roughly a 1.1 GB to 1.5 GB release asset after runtime images are included. Generated bundles must not be committed to Git.
+The generated bundle is expected to be large. The current platform-only bundle is roughly 900 MB after runtime images are included. Generated bundles must not be committed to Git.
 
 Application runtime images referenced by `kadm-app-configs` are intentionally not included in this platform bundle. They should be distributed by the application release pipeline or a separate application image bundle.
+
+## Release
+
+The latest complete offline platform bundle is published to:
+
+- Release page: <https://github.com/ccq18/kadm-platform-assets/releases/tag/bundle-latest>
+- Stable asset URL: <https://github.com/ccq18/kadm-platform-assets/releases/download/bundle-latest/kadm-platform-assets.tgz>
+
+The stable asset name is always `kadm-platform-assets.tgz`. Versioned assets are also uploaded for inspection, but installers should use the stable URL unless testing a specific build.
+
+## Usage
+
+On the first server, run the bootstrap installer. By default it downloads the stable `bundle-latest` asset, restores the bundled KADM repositories, imports the offline cache, installs K3s, imports platform runtime images into K3s containerd, and configures delivery:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ccq18/kadm-platform-system/main/bootstrap/install-kadm.sh | \
+  bash -s -- all \
+    --cluster kadm-test \
+    --access-host root@47.102.134.76 \
+    --private-ip 10.0.1.40 \
+    --dns-upstream 1.1.1.1 \
+    --dns-upstream 8.8.8.8
+```
+
+To use a different bundle URL, set `KADM_ASSET_BUNDLE_URL`:
+
+```bash
+export KADM_ASSET_BUNDLE_URL=https://github.com/ccq18/kadm-platform-assets/releases/download/bundle-latest/kadm-platform-assets.tgz
+
+curl -fsSL https://raw.githubusercontent.com/ccq18/kadm-platform-system/main/bootstrap/install-kadm.sh | \
+  bash -s -- prepare
+```
+
+The `all` action runs `prepare` and then `deploy`. Use `prepare` alone to pre-download and import the bundle before making cluster changes; use `deploy` later to install K3s and platform components from the imported cache.
 
 ## Local Build
 
@@ -72,5 +106,12 @@ In GitHub Actions, the workflow uses `GITHUB_TOKEN` with `packages: read` by def
 `build-offline-bundle` runs on push to `main` and on manual dispatch.
 
 It publishes a stable release asset named `kadm-platform-assets.tgz` on the `bundle-latest` release tag so the bootstrap installer can use a fixed download URL.
+
+Manual trigger:
+
+```bash
+gh workflow run build-offline-bundle.yaml --ref main
+gh run watch
+```
 
 The workflow intentionally does not upload the full bundle as a long-lived GitHub Actions artifact. Large bundles should be distributed through GitHub Release assets to avoid exhausting Actions artifact storage quotas.
