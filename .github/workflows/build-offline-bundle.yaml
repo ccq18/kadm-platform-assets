@@ -20,16 +20,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install bundle tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zstd
+
       - name: Build bundle
+        env:
+          KADM_GITHUB_TOKEN: ${{ github.token }}
+          KADM_GHCR_USERNAME: ${{ secrets.KADM_GHCR_USERNAME }}
+          KADM_GHCR_TOKEN: ${{ secrets.KADM_GHCR_TOKEN }}
         run: |
           chmod +x scripts/build-bundle.sh
           scripts/build-bundle.sh
-
-      - name: Upload bundle
-        uses: actions/upload-artifact@v4
-        with:
-          name: kadm-platform-assets
-          path: dist/*.tgz
 
       - name: Publish latest bundle release
         uses: softprops/action-gh-release@v2
