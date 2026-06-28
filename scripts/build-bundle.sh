@@ -39,7 +39,7 @@ USAGE
   esac
 done
 
-DIST_DIR="${ROOT_DIR}/dist"
+DIST_DIR="${KADM_ASSETS_DIST_DIR:-${ROOT_DIR}/dist}"
 CACHE_DIR="${DIST_DIR}/cache"
 MANIFEST_DIR="${CACHE_DIR}/manifests"
 CHART_DIR="${CACHE_DIR}/charts"
@@ -114,7 +114,7 @@ extract_repo_archive() {
   local target_dir="$2"
   local tmp_extract extracted_dir
   tmp_extract="$(mktemp -d)"
-  tar -xzf "${archive}" -C "${tmp_extract}"
+  tar --no-same-owner -xzf "${archive}" -C "${tmp_extract}"
   extracted_dir="$(find "${tmp_extract}" -mindepth 1 -maxdepth 1 -type d | head -n 1)"
   [[ -n "${extracted_dir}" ]] || {
     rm -rf "${tmp_extract}"
@@ -134,10 +134,15 @@ download_repo_archive() {
   local target_dir="${SOURCE_DIR}/${repo}"
 
   if [[ -d "${ROOT_DIR}/../${repo}" ]]; then
-    tar --exclude .git -czf "${archive}" -C "${ROOT_DIR}/.." "${repo}"
+    tar \
+      --exclude .git \
+      --exclude '*/node_modules' \
+      --exclude '*/dist' \
+      --exclude '*/output' \
+      -czf "${archive}" -C "${ROOT_DIR}/.." "${repo}"
     rm -rf "${target_dir}"
     mkdir -p "${target_dir}"
-    tar -xzf "${archive}" -C "${SOURCE_DIR}"
+    tar --no-same-owner -xzf "${archive}" -C "${SOURCE_DIR}"
     return 0
   fi
 
@@ -182,7 +187,7 @@ image_from_manifest() {
 
 write_runtime_image_list() {
   local output="$1"
-  local release_console_dir="${SOURCE_DIR}/${KADM_RELEASE_CONSOLE_REPO}"
+  local release_console_dir="${SOURCE_DIR}/${KADM_SYSTEM_REPO}/console"
 
   {
     image_from_manifest "$(manifest_path "${ARGO_CD_URL}")"
@@ -307,7 +312,6 @@ ENV
 
 prepare_inputs() {
   download_repo_archive "${KADM_SYSTEM_REPO}" "${KADM_SYSTEM_REF}"
-  download_repo_archive "${KADM_RELEASE_CONSOLE_REPO}" "${KADM_RELEASE_CONSOLE_REF}"
   download_repo_archive "${KADM_APP_CONFIGS_REPO}" "${KADM_APP_CONFIGS_REF}"
 }
 

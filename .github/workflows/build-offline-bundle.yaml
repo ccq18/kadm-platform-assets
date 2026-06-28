@@ -9,7 +9,6 @@ on:
       - .github/workflows/build-offline-bundle.yaml
       - scripts/**
       - versions/**
-      - README.md
 
 jobs:
   build:
