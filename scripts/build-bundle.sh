@@ -206,6 +206,38 @@ docker_login_if_configured() {
   fi
 }
 
+docker_pull_with_retries() {
+  local image="$1"
+  local attempt
+  for attempt in 1 2 3; do
+    if docker pull "${image}"; then
+      return 0
+    fi
+    [[ "${attempt}" -eq 3 ]] || sleep 10
+  done
+  return 1
+}
+
+docker_pull_image() {
+  local image="$1"
+  local docker_hub_image=""
+
+  if docker_pull_with_retries "${image}"; then
+    return 0
+  fi
+
+  case "${image}" in
+    public.ecr.aws/docker/library/*:*)
+      docker_hub_image="docker.io/library/${image#public.ecr.aws/docker/library/}"
+      ;;
+  esac
+
+  [[ -n "${docker_hub_image}" ]] || return 1
+  echo "warning: failed to pull ${image}; trying ${docker_hub_image}" >&2
+  docker_pull_with_retries "${docker_hub_image}"
+  docker tag "${docker_hub_image}" "${image}"
+}
+
 export_runtime_images() {
   local list_file="$1"
   local archive="${IMAGE_DIR}/runtime-images.tar.zst"
@@ -224,7 +256,7 @@ export_runtime_images() {
   docker_login_if_configured
   while IFS= read -r image; do
     [[ -n "${image}" ]] || continue
-    docker pull "${image}"
+    docker_pull_image "${image}"
     images+=("${image}")
   done < "${list_file}"
 
