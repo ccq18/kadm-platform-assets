@@ -29,6 +29,7 @@ metadata/
 
 - K3s `v1.36.2+k3s1` install script、linux-amd64 binary、airgap image bundle
 - Helm `v3.15.4` linux-amd64 archive
+- Crane `v0.21.7` linux-amd64 archive
 - Gateway API `v1.5.1` experimental install manifest
 - Argo CD `v3.4.4` install manifest
 - Argo Rollouts `v1.9.0` install manifest
@@ -144,6 +145,7 @@ The current complete platform bundle includes:
 
 - K3s `v1.36.2+k3s1` install script, linux-amd64 binary, and airgap image bundle
 - Helm `v3.15.4` linux-amd64 archive
+- Crane `v0.21.7` linux-amd64 archive
 - Gateway API `v1.5.1` experimental install manifest
 - Argo CD `v3.4.4` install manifest
 - Argo Rollouts `v1.9.0` install manifest

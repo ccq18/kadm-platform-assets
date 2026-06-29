@@ -256,6 +256,7 @@ prepare_bundle_assets() {
   download "${K3S_BINARY_URL}" "${K3S_DIR}/k3s-${K3S_VERSION}"
   download "${K3S_AIRGAP_IMAGES_URL}" "${K3S_DIR}/k3s-airgap-images-${K3S_VERSION}-${K3S_ARCH}.tar.zst"
   download "${HELM_URL}" "${TOOL_DIR}/helm-${HELM_VERSION}-${HELM_PLATFORM}.tar.gz"
+  download "${CRANE_URL}" "${TOOL_DIR}/crane-${CRANE_VERSION}-${CRANE_PLATFORM}.tar.gz"
 }
 
 prepare_runtime_manifests
