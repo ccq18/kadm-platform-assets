@@ -22,7 +22,6 @@ cache/
   k3s/
   tools/
   images/
-  repos/
 metadata/
 ```
 
@@ -34,9 +33,9 @@ metadata/
 - Argo CD `v3.4.4` install manifest
 - Argo Rollouts `v1.9.0` install manifest
 - Cilium `1.19.5` chart
-- 平台运行镜像：Argo CD、Argo Rollouts、Cilium、KADM Release Console
-- `kadm-platform-system` 源码归档，包含 `console/`
-- `kadm-app-configs` 源码归档
+- 平台基础运行镜像：Argo CD、Argo Rollouts、Cilium
+
+`kadm-platform-assets` 不再打包 `kadm-platform-system`、`kadm-app-configs` 或 KADM Release Console。服务端安装应先导入这个基础 bundle，再单独获取 `kadm-platform-system` 包，并在 K8s 基础组件就绪后完成 release console 与 GitOps 的后续部署。
 
 业务应用镜像不包含在平台 bundle 中。应用镜像由应用仓库 CI 推送到 GHCR；完全离线应用分发应使用单独的应用镜像包。
 
@@ -86,7 +85,7 @@ scripts/build-bundle.sh --list-images
 scripts/build-bundle.sh --skip-image-export
 ```
 
-私有 GHCR 包需要凭据：
+当前基础 bundle 默认只拉公共镜像；只有后续把基础平台镜像迁到私有 GHCR 时才需要凭据：
 
 ```bash
 export KADM_GHCR_USERNAME=<github-user>
@@ -138,7 +137,6 @@ cache/
   k3s/
   tools/
   images/
-  repos/
 metadata/
 ```
 
@@ -150,9 +148,9 @@ The current complete platform bundle includes:
 - Argo CD `v3.4.4` install manifest
 - Argo Rollouts `v1.9.0` install manifest
 - Cilium `1.19.5` chart
-- Platform runtime images for Argo CD, Argo Rollouts, Cilium, and KADM Release Console
-- Source archive for `kadm-platform-system`, including `console/`
-- Source archive for `kadm-app-configs`
+- Base runtime images for Argo CD, Argo Rollouts, and Cilium
+
+`kadm-platform-assets` no longer packages `kadm-platform-system`, `kadm-app-configs`, or the KADM Release Console image. Server installation should import this base bundle first, then fetch the separate `kadm-platform-system` package, and only after Kubernetes base components are ready continue with release-console and GitOps deployment.
 
 Business application images are not included in the platform bundle. Application images are pushed to GHCR by application repository CI. Fully offline application distribution should use a separate application image bundle.
 
@@ -202,7 +200,7 @@ Build a non-complete bundle without exporting images:
 scripts/build-bundle.sh --skip-image-export
 ```
 
-Private GHCR packages need credentials:
+The current base bundle pulls public images only. Keep GHCR credentials only if future base-platform images move to a private GHCR package:
 
 ```bash
 export KADM_GHCR_USERNAME=<github-user>

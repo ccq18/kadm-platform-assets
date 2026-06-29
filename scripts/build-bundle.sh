@@ -46,19 +46,15 @@ CHART_DIR="${CACHE_DIR}/charts"
 K3S_DIR="${CACHE_DIR}/k3s"
 TOOL_DIR="${CACHE_DIR}/tools"
 IMAGE_DIR="${CACHE_DIR}/images"
-REPO_DIR="${CACHE_DIR}/repos"
-SOURCE_DIR="${DIST_DIR}/sources"
 METADATA_DIR="${DIST_DIR}/metadata"
 
-rm -rf "${CACHE_DIR}" "${SOURCE_DIR}" "${METADATA_DIR}"
+rm -rf "${CACHE_DIR}" "${METADATA_DIR}"
 mkdir -p \
   "${MANIFEST_DIR}" \
   "${CHART_DIR}" \
   "${K3S_DIR}" \
   "${TOOL_DIR}" \
   "${IMAGE_DIR}" \
-  "${REPO_DIR}" \
-  "${SOURCE_DIR}" \
   "${METADATA_DIR}"
 
 github_url_uses_token() {
@@ -109,66 +105,6 @@ manifest_path() {
   echo "${MANIFEST_DIR}/$(manifest_name "${url}").yaml"
 }
 
-extract_repo_archive() {
-  local archive="$1"
-  local target_dir="$2"
-  local tmp_extract extracted_dir
-  tmp_extract="$(mktemp -d)"
-  tar --no-same-owner -xzf "${archive}" -C "${tmp_extract}"
-  extracted_dir="$(find "${tmp_extract}" -mindepth 1 -maxdepth 1 -type d | head -n 1)"
-  [[ -n "${extracted_dir}" ]] || {
-    rm -rf "${tmp_extract}"
-    echo "error: failed to extract ${archive}" >&2
-    exit 1
-  }
-  rm -rf "${target_dir}"
-  mkdir -p "$(dirname "${target_dir}")"
-  mv "${extracted_dir}" "${target_dir}"
-  rm -rf "${tmp_extract}"
-}
-
-download_repo_archive() {
-  local repo="$1"
-  local ref="$2"
-  local archive="${REPO_DIR}/${repo}.tgz"
-  local target_dir="${SOURCE_DIR}/${repo}"
-
-  if [[ -d "${ROOT_DIR}/../${repo}" ]]; then
-    tar \
-      --exclude .git \
-      --exclude '*/node_modules' \
-      --exclude '*/dist' \
-      --exclude '*/output' \
-      -czf "${archive}" -C "${ROOT_DIR}/.." "${repo}"
-    rm -rf "${target_dir}"
-    mkdir -p "${target_dir}"
-    tar --no-same-owner -xzf "${archive}" -C "${SOURCE_DIR}"
-    return 0
-  fi
-
-  download "https://api.github.com/repos/${GITHUB_OWNER}/${repo}/tarball/${ref}" "${archive}"
-  extract_repo_archive "${archive}" "${target_dir}"
-}
-
-image_from_kustomization() {
-  local file="$1"
-  awk '
-    /^[[:space:]]*newName:[[:space:]]*/ {
-      name = $0
-      sub(/^[[:space:]]*newName:[[:space:]]*/, "", name)
-    }
-    /^[[:space:]]*newTag:[[:space:]]*/ {
-      tag = $0
-      sub(/^[[:space:]]*newTag:[[:space:]]*/, "", tag)
-      if (name != "" && tag != "") {
-        print name ":" tag
-        name = ""
-        tag = ""
-      }
-    }
-  ' "${file}"
-}
-
 image_from_manifest() {
   local file="$1"
   awk '
@@ -187,7 +123,6 @@ image_from_manifest() {
 
 write_runtime_image_list() {
   local output="$1"
-  local release_console_dir="${SOURCE_DIR}/${KADM_SYSTEM_REPO}/console"
 
   {
     image_from_manifest "$(manifest_path "${ARGO_CD_URL}")"
@@ -197,7 +132,6 @@ write_runtime_image_list() {
     printf '%s\n' "${CILIUM_ENVOY_IMAGE}"
     printf '%s\n' "${CILIUM_CERTGEN_IMAGE}"
     printf '%s\n' "${CILIUM_STARTUP_SCRIPT_IMAGE}"
-    image_from_kustomization "${release_console_dir}/k8s/overlays/prod/kustomization.yaml"
   } | awk 'NF && !seen[$0]++' > "${output}"
 }
 
@@ -310,11 +244,6 @@ KADM_ARGO_ROLLOUTS_VERSION=${ARGO_ROLLOUTS_VERSION}
 ENV
 }
 
-prepare_inputs() {
-  download_repo_archive "${KADM_SYSTEM_REPO}" "${KADM_SYSTEM_REF}"
-  download_repo_archive "${KADM_APP_CONFIGS_REPO}" "${KADM_APP_CONFIGS_REF}"
-}
-
 prepare_runtime_manifests() {
   download "${ARGO_CD_URL}" "$(manifest_path "${ARGO_CD_URL}")"
   download "${ARGO_ROLLOUTS_URL}" "$(manifest_path "${ARGO_ROLLOUTS_URL}")"
@@ -329,7 +258,6 @@ prepare_bundle_assets() {
   download "${HELM_URL}" "${TOOL_DIR}/helm-${HELM_VERSION}-${HELM_PLATFORM}.tar.gz"
 }
 
-prepare_inputs
 prepare_runtime_manifests
 write_runtime_image_list "${IMAGE_DIR}/runtime-images.txt"
 
@@ -351,7 +279,6 @@ write_checksums
 BUNDLE_NAME="kadm-platform-assets-k3s-${K3S_VERSION}-gateway-${GATEWAY_API_VERSION}-argocd-${ARGO_CD_VERSION}-rollouts-${ARGO_ROLLOUTS_VERSION}-cilium-${CILIUM_VERSION}.tgz"
 tar -czf "${DIST_DIR}/${BUNDLE_NAME}" -C "${DIST_DIR}" \
   metadata \
-  cache/repos \
   cache/manifests \
   cache/charts \
   cache/k3s \
